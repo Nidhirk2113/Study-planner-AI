@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Study Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      
+      .chat-container {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        backdrop-filter: blur(10px);
+      }
+      
+      .header-gradient {
+        background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+      
+      .typing-indicator {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        color: #6b7280;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        backdrop-filter: blur(10px);
+      }
+      
+      .typing-dot {
+        width: 8px;
+        height: 8px;
+        margin: 0 2px;
+        background: linear-gradient(45deg, #ff6b6b, #feca57);
+        border-radius: 50%;
+        animation: typing 1s infinite ease-in-out;
+      }
+      
+      .message-bubble {
+        padding: 1.2rem;
+        border-radius: 2rem;
+        max-width: 85%;
+        margin-bottom: 1rem;
+        word-wrap: break-word;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+      
+      .user-message {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        align-self: flex-end;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+      
+      .agent-message {
+        background: rgba(255, 255, 255, 0.95);
+        color: #2d3748;
+        align-self: flex-start;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .chat-background {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      /* Study Plan Table Styles */
+      .study-plan-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+      
+      .study-plan-table th {
+        background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 700;
+        font-size: 1rem;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      
+      .study-plan-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        vertical-align: top;
+        font-size: 0.95rem;
+      }
+      
+      .study-plan-table tr:nth-child(even) {
+        background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(254, 202, 87, 0.05) 100%);
+      }
+      
+      .study-plan-table tr:nth-child(odd) {
+        background: linear-gradient(135deg, rgba(72, 219, 251, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+      }
+      
+      .study-plan-table tr:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+      }
+      
+      .study-plan-table tr:last-child td {
+        border-bottom: none;
+      }
+      
+      @keyframes typing {
+        0%, 60%, 100% {
+          transform: translateY(0);
+        }
+        30% {
+          transform: translateY(-10px);
+        }
+      }
+      
+      .example-topics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+      
+      .topic-chip {
+        background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        border: none;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      
+      .topic-chip:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        background: linear-gradient(135deg, #feca57 0%, #48dbfb 100%);
+      }
+      
+      .topic-chip:nth-child(2) {
+        background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+        box-shadow: 0 4px 15px rgba(72, 219, 251, 0.3);
+      }
+      
+      .topic-chip:nth-child(2):hover {
+        background: linear-gradient(135deg, #0abde3 0%, #006ba6 100%);
+        box-shadow: 0 6px 20px rgba(72, 219, 251, 0.4);
+      }
+      
+      .topic-chip:nth-child(3) {
+        background: linear-gradient(135deg, #5f27cd 0%, #341f97 100%);
+        box-shadow: 0 4px 15px rgba(95, 39, 205, 0.3);
+      }
+      
+      .topic-chip:nth-child(3):hover {
+        background: linear-gradient(135deg, #341f97 0%, #192a56 100%);
+        box-shadow: 0 6px 20px rgba(95, 39, 205, 0.4);
+      }
+      
+      .topic-chip:nth-child(4) {
+        background: linear-gradient(135deg, #00d2d3 0%, #54a0ff 100%);
+        box-shadow: 0 4px 15px rgba(0, 210, 211, 0.3);
+      }
+      
+      .topic-chip:nth-child(4):hover {
+        background: linear-gradient(135deg, #54a0ff 0%, #2e86de 100%);
+        box-shadow: 0 6px 20px rgba(0, 210, 211, 0.4);
+      }
+      
+      .topic-chip:nth-child(5) {
+        background: linear-gradient(135deg, #ff9ff3 0%, #f368e0 100%);
+        box-shadow: 0 4px 15px rgba(255, 159, 243, 0.3);
+      }
+      
+      .topic-chip:nth-child(5):hover {
+        background: linear-gradient(135deg, #f368e0 0%, #be2edd 100%);
+        box-shadow: 0 6px 20px rgba(255, 159, 243, 0.4);
+      }
+      
+      .send-button {
+        background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        transition: all 0.3s ease;
+      }
+      
+      .send-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        background: linear-gradient(135deg, #feca57 0%, #ff6b6b 100%);
+      }
+      
+      .input-field {
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+      
+      .input-field:focus {
+        border-color: #ff6b6b;
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+      }
+      
+      .footer-gradient {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+      }
+      
+      .welcome-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+      }
+      
+      .emoji-bounce {
+        animation: bounce 2s infinite;
+      }
+      
+      @keyframes bounce {
+        0%, 20%, 53%, 80%, 100% {
+          animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+          transform: translate3d(0,0,0);
+        }
+        40%, 43% {
+          animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+          transform: translate3d(0, -30px, 0);
+        }
+        70% {
+          animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+          transform: translate3d(0, -15px, 0);
+        }
+        90% {
+          transform: translate3d(0,-4px,0);
+        }
+      }
+      
+      .pulse-glow {
+        animation: pulseGlow 3s ease-in-out infinite alternate;
+      }
+      
+      @keyframes pulseGlow {
+        from {
+          text-shadow: 0 0 5px rgba(255, 107, 107, 0.5), 0 0 10px rgba(255, 107, 107, 0.5), 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+        to {
+          text-shadow: 0 0 10px rgba(254, 202, 87, 0.8), 0 0 20px rgba(254, 202, 87, 0.8), 0 0 30px rgba(254, 202, 87, 0.8);
+        }
+      }
+      
+      .glassmorphism {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <header class="header-gradient p-6 text-center rounded-t-2xl">
+        <h1 class="font-bold text-3xl text-white mb-2 pulse-glow">
+          <span class="emoji-bounce">🎓</span> AI Study Planner <span class="emoji-bounce">✨</span>
+        </h1>
+        <p class="text-white/90 font-medium">Get personalized study plans for any topic with beautiful visualizations</p>
+      </header>
+
+      <main id="chat-history" class="flex-1 overflow-y-auto p-4 space-y-4 chat-background">
+        <div class="message-bubble agent-message">
+          <div>
+            <span class="welcome-text text-xl font-bold">Welcome to your AI Study Planner! 🚀</span><br><br>
+            <span class="text-gray-700">I can create detailed, colorful study plans for any topic. Just tell me what you'd like to learn!</span>
+            <br><br>
+            <strong class="text-purple-600">🎯 Try these popular topics:</strong>
+            <div class="example-topics">
+              <button class="topic-chip" onclick="setTopic('Machine Learning')">🤖 Machine Learning</button>
+              <button class="topic-chip" onclick="setTopic('Python Programming')">🐍 Python Programming</button>
+              <button class="topic-chip" onclick="setTopic('Data Science')">📊 Data Science</button>
+              <button class="topic-chip" onclick="setTopic('Web Development')">🌐 Web Development</button>
+              <button class="topic-chip" onclick="setTopic('Digital Marketing')">📱 Digital Marketing</button>
+            </div>
+            <br>
+            <div class="p-3 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 border-l-4 border-purple-400 mt-3">
+              <span class="text-purple-700 font-medium">💡 Try saying: "Create a study plan for [your topic]" or simply type the topic name!</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer-gradient p-4 rounded-b-2xl">
+        <div class="flex items-center">
+          <input
+            type="text"
+            id="user-input"
+            class="input-field flex-1 p-4 rounded-full focus:outline-none font-medium"
+            placeholder="🎯 What would you like to learn? (e.g., Python Programming, Data Science...)"
+          />
+          <button
+            id="send-btn"
+            class="send-button ml-4 px-8 py-4 text-white rounded-full font-bold text-lg transition-all duration-300"
+          >
+            Send 🚀
+          </button>
+        </div>
+        <div class="text-center mt-3">
+          <div class="inline-block px-4 py-2 rounded-full glassmorphism">
+            <span class="text-sm text-gray-600 font-medium">✨ Be specific about your topic for better study plans ✨</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      const chatHistory = document.getElementById("chat-history");
+      const userInput = document.getElementById("user-input");
+      const sendBtn = document.getElementById("send-btn");
+
+      function addMessage(sender, content, isHtml = false) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add(
+          "message-bubble",
+          sender === "user" ? "user-message" : "agent-message"
+        );
+        
+        if (isHtml && content.includes("<table>")) {
+          // Style the table with our custom CSS
+          content = content.replace(/<table>/g, '<table class="study-plan-table">');
+          messageElement.innerHTML = content;
+        } else if (isHtml) {
+          messageElement.innerHTML = content;
+        } else {
+          messageElement.textContent = content;
+        }
+        
+        chatHistory.appendChild(messageElement);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
+
+      function showTypingIndicator() {
+        const typingElement = document.createElement("div");
+        typingElement.classList.add("typing-indicator");
+        typingElement.id = "typing-indicator";
+        typingElement.innerHTML = `
+          <span class="font-medium text-white">🤖 AI is thinking</span>
+          <div class="typing-dot" style="animation-delay: 0s;"></div>
+          <div class="typing-dot" style="animation-delay: 0.2s;"></div>
+          <div class="typing-dot" style="animation-delay: 0.4s;"></div>
+        `;
+        chatHistory.appendChild(typingElement);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
+
+      function hideTypingIndicator() {
+        const typingElement = document.getElementById("typing-indicator");
+        if (typingElement) {
+          typingElement.remove();
+        }
+      }
+
+      async function sendMessage() {
+        const message = userInput.value.trim();
+        if (message === "") return;
+
+        addMessage("user", message);
+        userInput.value = "";
+        showTypingIndicator();
+
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ message: message }),
+          });
+
+          hideTypingIndicator();
+
+          const data = await response.json();
+          if (data.response) {
+            // Check if response contains HTML table
+            const isStudyPlan = data.response.includes("<table>");
+            addMessage("agent", data.response, isStudyPlan);
+          } else if (data.error) {
+            addMessage("agent", `❌ Error: ${data.error}`);
+          } else {
+            addMessage("agent", "🤔 Unexpected response from server.");
+          }
+        } catch (error) {
+          hideTypingIndicator();
+          console.error("Error:", error);
+          addMessage("agent", "🚫 Sorry, something went wrong. Please try again.");
+        }
+      }
+
+      function setTopic(topic) {
+        userInput.value = `Create a study plan for ${topic}`;
+        userInput.focus();
+        // Add a small delay to show the text being typed
+        setTimeout(() => {
+          sendMessage();
+        }, 300);
+      }
+
+      sendBtn.addEventListener("click", sendMessage);
+      userInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          sendMessage();
+        }
+      });
+
+      // Focus on input when page loads
+      userInput.focus();
+      
+      // Add some interactive feedback
+      sendBtn.addEventListener('mousedown', function() {
+        this.style.transform = 'translateY(0px) scale(0.98)';
+      });
+      
+      sendBtn.addEventListener('mouseup', function() {
+        this.style.transform = 'translateY(-2px) scale(1.05)';
+      });
+    </script>
+  </body>
+</html>
